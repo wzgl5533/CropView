@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+    <!--一般全屏，要和裁剪框尺寸匹配-->
+    <ImageView
+        android:id="@+id/bg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="fitCenter"
+        android:src="@drawable/d"/>
+    <ImageView
+        android:id="@+id/crop_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="centerInside"
+        android:background="@color/white"/>
+
+    <com.qlh.crop.cropviewlibrary.view.CropView
+        android:visibility="visible"
+        android:id="@+id/circle_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:cv_border_line_color="@color/white"
+        app:cv_corner_line_color="@color/white"
+        app:cv_middle_line_color="@color/white"
+        app:cv_outer_bg_color="@color/black_alpha_160"
+        app:cv_scan_line_color="@color/white"
+        app:cv_scan_line_width="1dp"
+        app:cv_border_length="247dp"
+        app:cv_border_line_width="1dp"
+        app:cv_corner_line_with="3dp"
+        app:cv_corner_line_height="13dp"
+        app:cv_min_border_length="100dp"
+        app:cv_crop_model="rect"
+        app:cv_is_show_corner_line="true"
+        app:cv_is_show_border_line="true"
+        app:cv_is_show_middle_line="true"
+        app:cv_is_show_scan_line="true"
+        app:cv_is_touch_corner_line_scale="false"
+        app:cv_is_touch_middle_line_scale="false"/>
+
+</RelativeLayout>
