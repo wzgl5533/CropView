@@ -1,7 +1,7 @@
 # CropView
 
 ## 简介
-绘制裁剪框（设置圆形，椭圆和矩形）
+绘制裁剪框（设置圆形，椭圆和矩形），根据裁剪框的尺寸映射到图片的实际裁剪区域
 
 ## 功能
 * 圆形裁剪框
@@ -32,6 +32,21 @@ Add it in your module build.gradle
 ```
 2. 添加DropDownMenu 到你的布局文件，如下：
 ```
+ <!--一般全屏，要和裁剪框尺寸匹配-->
+    <ImageView
+        android:id="@+id/bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/d"/>
+	
+    <ImageView
+        android:id="@+id/crop_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="centerInside"
+        android:background="@color/white"/>
+	
 <com.qlh.crop.cropviewlibrary.view.CropView
         android:visibility="visible"
         android:id="@+id/circle_view"
@@ -57,3 +72,17 @@ Add it in your module build.gradle
         app:cv_is_touch_middle_line_scale="false"//是触摸中间线缩放
 	/>
 ```
+
+## 代码分析（kotlin）
+
+1.设置图片源：
+```
+ crop_view.setSourceBitmap(BitmapFactory.decodeResource(resources,R.drawable.d))
+ ```
+ 2.设置裁剪回调
+ ```
+ crop_view.setCropBitmapCallBack {
+            crop_img.setImageBitmap(it)
+        }
+```
+ 
