@@ -10,6 +10,7 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -22,6 +23,9 @@ import com.qlh.crop.cropviewlibrary.utils.QLHUtils;
 /**
  * 作者：dell on 2018/9/7 18:26
  * 描述：绘制拍照推荐裁剪框
+ * <br>
+ *     本库目前只是简单的绘制和裁剪
+ *     </br>
  */
 public class CropView extends View {
 
@@ -239,6 +243,11 @@ public class CropView extends View {
         return true;
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
     /**
      * 初始化布局
      *
@@ -251,27 +260,9 @@ public class CropView extends View {
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-
-        //总高和总宽需要综合考虑view的宽和高和图片的宽和高
-        //但是由于异步机制，无法在onLayout之前获得偏移量，因此图片溢出改为消息提醒
-        /*
-        if(imageHeight==0){
-        	VIEW_HEIGHT = this.getHeight();
-        }else{
-        	if(imageHeight<this.getHeight())
-        		VIEW_HEIGHT=imageHeight;
-        	else
-        		VIEW_HEIGHT = this.getHeight()+getTranslationY();
-        }
-        if(imageWidth==0){
-        	VIEW_WIDTH = this.getWidth();
-        }else{
-        	if(imageWidth<this.getWidth())
-        		VIEW_WIDTH=imageWidth;
-        	else
-        		VIEW_WIDTH = this.getWidth()+getTranslationX();
-        }
-        */
+        //如果没有改变不用重新绘制，否则会导致移动裁剪框时重绘，不能保持当前状态
+        if (!changed){return;}
+        //获取视图尺寸
         VIEW_HEIGHT = this.getHeight();
         VIEW_WIDTH = this.getWidth();
         //初始化四个点的坐标
