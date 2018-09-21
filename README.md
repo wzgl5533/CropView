@@ -9,7 +9,8 @@
 * 矩形裁剪框
 
 ## ScreenShot
-
+![](https://github.com/wzgl5533/CropView/blob/master/screenshot/1.gif)
+![](https://github.com/wzgl5533/CropView/blob/master/screenshot/2.gif)
 
 ## 使用
 1. 添加依赖
