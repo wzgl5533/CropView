@@ -35,12 +35,12 @@
         app:cv_corner_line_with="3dp"
         app:cv_corner_line_height="13dp"
         app:cv_min_border_length="100dp"
-        app:cv_crop_model="rect"
+        app:cv_crop_model="oval"
         app:cv_is_show_corner_line="true"
         app:cv_is_show_border_line="true"
         app:cv_is_show_middle_line="true"
-        app:cv_is_show_scan_line="true"
-        app:cv_is_touch_corner_line_scale="false"
-        app:cv_is_touch_middle_line_scale="false"/>
+        app:cv_is_show_scan_line="false"
+        app:cv_is_touch_corner_line_scale="true"
+        app:cv_is_touch_middle_line_scale="true"/>
 
 </RelativeLayout>
