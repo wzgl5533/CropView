@@ -70,6 +70,8 @@ Add it in your module build.gradle
         app:cv_is_show_scan_line="true"//是否显示扫描线
         app:cv_is_touch_corner_line_scale="false"//是触摸拐角缩放
         app:cv_is_touch_middle_line_scale="false"//是触摸中间线缩放
+	app:cv_width_percent="100%w"//宽度占屏幕比例，10%w  10%h
+        app:cv_height_percent="100%h"//高度占屏幕比例,10%w  10%h
 	/>
 ```
 
