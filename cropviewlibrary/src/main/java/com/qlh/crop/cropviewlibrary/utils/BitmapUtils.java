@@ -62,7 +62,7 @@ public class BitmapUtils {
      */
     public static Bitmap getCircularBitmap(Bitmap square) {
         if (square == null) return null;
-        Bitmap output = Bitmap.createBitmap(square.getWidth(), square.getHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap output = Bitmap.createBitmap(square.getWidth(), square.getHeight(), Bitmap.Config.ARGB_4444);
 
         final Rect rect = new Rect(0, 0, square.getWidth(), square.getHeight());
         Canvas canvas = new Canvas(output);
@@ -86,7 +86,7 @@ public class BitmapUtils {
      */
     public static Bitmap getOvalBitmap(Bitmap square) {
         if (square == null) return null;
-        Bitmap output = Bitmap.createBitmap(square.getWidth(), square.getHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap output = Bitmap.createBitmap(square.getWidth(), square.getHeight(), Bitmap.Config.ARGB_4444);
 
         final Rect rect = new Rect(0, 0, square.getWidth(), square.getHeight());
         Canvas canvas = new Canvas(output);

@@ -32,17 +32,18 @@
         app:cv_outer_bg_color="@color/black_alpha_160"
         app:cv_scan_line_color="@color/white"
         app:cv_scan_line_width="1dp"
-        app:cv_border_length="247dp"
+        app:cv_border_length="100dp"
         app:cv_border_line_width="1dp"
         app:cv_corner_line_with="3dp"
         app:cv_corner_line_height="13dp"
-        app:cv_min_border_length="100dp"
-        app:cv_crop_model="oval"
+        app:cv_min_border_length="45dp"
+        app:cv_crop_model="circle"
         app:cv_is_show_corner_line="true"
         app:cv_is_show_border_line="true"
         app:cv_is_show_middle_line="true"
         app:cv_is_show_scan_line="false"
         app:cv_is_touch_corner_line_scale="true"
-        app:cv_is_touch_middle_line_scale="true"/>
+        app:cv_is_touch_middle_line_scale="true"
+        />
 
 </RelativeLayout>

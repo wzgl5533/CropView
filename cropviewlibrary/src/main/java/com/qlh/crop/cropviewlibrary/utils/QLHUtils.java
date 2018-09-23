@@ -1,6 +1,11 @@
 package com.qlh.crop.cropviewlibrary.utils;
 
 
+import android.content.Context;
+import android.graphics.Point;
+import android.os.Build;
+import android.view.WindowManager;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -279,5 +284,50 @@ public class QLHUtils {
                 positions[7][1] = positions[2][1];
                 break;
         }
+    }
+
+    /**
+     * 判断字符串是否为空，即为null或""
+     */
+    public static boolean isEmpty(String str) {
+        return ((str == null) || (str.length() == 0) || "null".equals(str));
+    }
+
+    /**
+     * Return the width of screen, in pixel.
+     *
+     * @return the width of screen, in pixel
+     */
+    public static int getScreenWidth(Context context) {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (wm == null) {
+            return context.getResources().getDisplayMetrics().widthPixels;
+        }
+        Point point = new Point();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            wm.getDefaultDisplay().getRealSize(point);
+        } else {
+            wm.getDefaultDisplay().getSize(point);
+        }
+        return point.x;
+    }
+
+    /**
+     * Return the height of screen, in pixel.
+     *
+     * @return the height of screen, in pixel
+     */
+    public static int getScreenHeight(Context context) {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (wm == null) {
+            return context.getResources().getDisplayMetrics().heightPixels;
+        }
+        Point point = new Point();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            wm.getDefaultDisplay().getRealSize(point);
+        } else {
+            wm.getDefaultDisplay().getSize(point);
+        }
+        return point.y;
     }
 }

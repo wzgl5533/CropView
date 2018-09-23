@@ -9,8 +9,8 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Region;
+import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -24,8 +24,8 @@ import com.qlh.crop.cropviewlibrary.utils.QLHUtils;
  * 作者：dell on 2018/9/7 18:26
  * 描述：绘制拍照推荐裁剪框
  * <br>
- *     本库目前只是简单的绘制和裁剪
- *     </br>
+ * 本库目前只是简单的绘制和裁剪
+ * </br>
  */
 public class CropView extends View {
 
@@ -36,15 +36,16 @@ public class CropView extends View {
     static int max;
     private static int NOW_MOVE_STATE = 1; //移动状态，默认为1，Y轴=1，X轴=2
     private static boolean MOVE_OR_ZOOM_STATE = true; //移动或缩放状态， true 为移动
-    private float VIEW_HEIGHT;   //总高
-    private float VIEW_WIDTH; //总宽
+    private int VIEW_HEIGHT;   //视图高
+    private int VIEW_WIDTH; //视图宽
+    private String VIEW_WIDTH_PERCENT, VIEW_HEIGHT_PERCENT;//视图宽高占屏幕比例
 
     //单位dp
-    private float BORDER_LENGTH = 200; //边框长度
+    private int BORDER_LENGTH = 200; //边框长度
     private int RECT_BORDER_WITH = 3; //长方形框框粗
     private int RECT_CORNER_WITH = 6; //四个角的粗
     private int RECT_CORNER_HEIGHT = 20; //四个角的长度
-    private int MIN_BORDER_LENGTH = RECT_CORNER_HEIGHT*3;//最小边框长度
+    private int MIN_BORDER_LENGTH = RECT_CORNER_HEIGHT * 5;//最小边框长度
     private int CROP_MODE = CropMode.RECT.getId();//裁剪模式
 
     //显示控制
@@ -117,21 +118,24 @@ public class CropView extends View {
                 (int) (mDensity * BORDER_LENGTH));
 
         MIN_BORDER_LENGTH = ta.getDimensionPixelSize(R.styleable.CropView_cv_min_border_length,
-                (RECT_CORNER_HEIGHT*3));
+                (RECT_CORNER_HEIGHT * 5));
         //设置最小值
-        if (MIN_BORDER_LENGTH<RECT_CORNER_HEIGHT*3){
-            MIN_BORDER_LENGTH = RECT_CORNER_HEIGHT*3;
+        if (MIN_BORDER_LENGTH < RECT_CORNER_HEIGHT * 5) {
+            MIN_BORDER_LENGTH = RECT_CORNER_HEIGHT * 5;
         }
 
-        CROP_MODE = ta.getInt(R.styleable.CropView_cv_crop_model,CROP_MODE);
+        CROP_MODE = ta.getInt(R.styleable.CropView_cv_crop_model, CROP_MODE);
         //线条显示
-        CORNER_SHOW = ta.getBoolean(R.styleable.CropView_cv_is_show_corner_line,true);
-        BORDER_SHOW = ta.getBoolean(R.styleable.CropView_cv_is_show_border_line,false);
-        MIDDLE_SHOW= ta.getBoolean(R.styleable.CropView_cv_is_show_middle_line,false);
-        SCAN_SHOW = ta.getBoolean(R.styleable.CropView_cv_is_show_scan_line,true);
+        CORNER_SHOW = ta.getBoolean(R.styleable.CropView_cv_is_show_corner_line, true);
+        BORDER_SHOW = ta.getBoolean(R.styleable.CropView_cv_is_show_border_line, false);
+        MIDDLE_SHOW = ta.getBoolean(R.styleable.CropView_cv_is_show_middle_line, false);
+        SCAN_SHOW = ta.getBoolean(R.styleable.CropView_cv_is_show_scan_line, true);
         //触摸缩放
-        TOUCH_CORNER_LINE_SCALE = ta.getBoolean(R.styleable.CropView_cv_is_touch_corner_line_scale,true);
-        TOUCH_MIDDLE_LINE_SCALE = ta.getBoolean(R.styleable.CropView_cv_is_touch_middle_line_scale,true);
+        TOUCH_CORNER_LINE_SCALE = ta.getBoolean(R.styleable.CropView_cv_is_touch_corner_line_scale, true);
+        TOUCH_MIDDLE_LINE_SCALE = ta.getBoolean(R.styleable.CropView_cv_is_touch_middle_line_scale, true);
+        //宽高占屏幕比例
+        VIEW_WIDTH_PERCENT = ta.getString(R.styleable.CropView_cv_width_percent);
+        VIEW_HEIGHT_PERCENT = ta.getString(R.styleable.CropView_cv_height_percent);
     }
 
 
@@ -142,7 +146,7 @@ public class CropView extends View {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (SCAN_SHOW){
+                if (SCAN_SHOW) {
                     IF_SCANNING_SHOW = true;//显示扫描线
                 }
                 if (isInTheCornerCircle(event.getX(), event.getY()) != -1) {
@@ -194,7 +198,7 @@ public class CropView extends View {
                     else if (POINT_STATE == 1) {
                         //如果边长+max太小，直接返回
                         //由于加入中间控制点，因此需要乘以2
-                        if (BORDER_LENGTH - max <= MIN_BORDER_LENGTH ) {
+                        if (BORDER_LENGTH - max <= MIN_BORDER_LENGTH) {
                             max = 0;
                         }
                         //加入中间控制点后，不能只以对角线判断，还需要判断长边和短边
@@ -231,7 +235,7 @@ public class CropView extends View {
                 lastY = y;
                 break;
             case MotionEvent.ACTION_UP:
-                if (SCAN_SHOW){
+                if (SCAN_SHOW) {
                     IF_SCANNING_SHOW = false; //不显示扫描线
                 }
                 MOVE_OR_ZOOM_STATE = true; //回归为默认的移动状态
@@ -244,8 +248,15 @@ public class CropView extends View {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    protected void onDraw(Canvas canvas) {
+
+        if (CROP_MODE == CropMode.RECT.getId()) {//矩形
+            drawRect(canvas);
+        } else if (CROP_MODE == CropMode.OVAL.getId()) {//椭圆
+            drawOval(canvas);
+        } else if (CROP_MODE == CropMode.CIRCLE.getId()) {//圆形
+            drawCircle(canvas);
+        }
     }
 
     /**
@@ -261,10 +272,15 @@ public class CropView extends View {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
         //如果没有改变不用重新绘制，否则会导致移动裁剪框时重绘，不能保持当前状态
-        if (!changed){return;}
+        if (!changed) {
+            return;
+        }
         //获取视图尺寸
         VIEW_HEIGHT = this.getHeight();
         VIEW_WIDTH = this.getWidth();
+        //检测裁剪框边长是否超出视图宽高范围
+        validateSize();
+
         //初始化四个点的坐标
         four_corner_coordinate_positions = new float[][]{
                 {(VIEW_WIDTH - BORDER_LENGTH) / 2, (VIEW_HEIGHT - BORDER_LENGTH) / 2}, //左上
@@ -279,32 +295,96 @@ public class CropView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 
-        if (CROP_MODE == CropMode.RECT.getId()){//矩形
-            drawRect(canvas);
-        }else if (CROP_MODE == CropMode.OVAL.getId()){//椭圆
-            drawOval(canvas);
-        }else if (CROP_MODE == CropMode.CIRCLE.getId()){//圆形
-            drawCircle(canvas);
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+
+        //检查百分比设置是否生效
+        String reg = "^[1-9][0-9]{1,2}%[wh]";
+        //如果是精确的，好说，是多少，就给多少；
+        if (widthMode == MeasureSpec.EXACTLY && widthSize == 0){
+            if (!QLHUtils.isEmpty(VIEW_WIDTH_PERCENT) && VIEW_WIDTH_PERCENT.matches(reg)) {
+                String[] widths = VIEW_WIDTH_PERCENT.split("%");
+                //获取数值
+                int value = Integer.valueOf(widths[0]);
+                //获取参考系
+                String reference = widths[1];
+                if ("w".equals(reference)) {//参考宽度
+                    widthSize = value * QLHUtils.getScreenWidth(getContext())/100 > QLHUtils.getScreenWidth(getContext())
+                            ? QLHUtils.getScreenWidth(getContext())
+                            : value * QLHUtils.getScreenWidth(getContext())/100;
+                }
+                if ("h".equals(reference)){
+                    widthSize = value * QLHUtils.getScreenHeight(getContext())/100 > QLHUtils.getScreenHeight(getContext())
+                            ? QLHUtils.getScreenHeight(getContext())
+                            : value * QLHUtils.getScreenHeight(getContext())/100;
+                }
+            }
         }
+
+        if (heightMode == MeasureSpec.EXACTLY && heightSize == 0){
+            if (!QLHUtils.isEmpty(VIEW_HEIGHT_PERCENT) && VIEW_HEIGHT_PERCENT.matches(reg)) {
+                String[] heights = VIEW_HEIGHT_PERCENT.split("%");
+                //获取数值
+                int value = Integer.valueOf(heights[0]);
+                //获取参考系
+                String reference = heights[1];
+                if ("w".equals(reference)) {//参考宽度
+                    heightSize = value * QLHUtils.getScreenWidth(getContext())/100 > QLHUtils.getScreenWidth(getContext())
+                            ? QLHUtils.getScreenWidth(getContext())
+                            : value * QLHUtils.getScreenWidth(getContext())/100;
+                }
+                if ("h".equals(reference)){
+                    heightSize = value * QLHUtils.getScreenHeight(getContext())/100 > QLHUtils.getScreenHeight(getContext())
+                            ? QLHUtils.getScreenHeight(getContext())
+                            : value * QLHUtils.getScreenHeight(getContext())/100;
+                }
+            }
+        }
+
+        //最后不要忘记了，调用父类的测量方法
+        setMeasuredDimension(widthSize, heightSize);
     }
 
-    /**矩形裁剪模式**/
-    private void drawRect(Canvas canvas){
+    /**
+     * 验证裁剪框的尺寸是否超出视图范围
+     * **/
+
+    private void validateSize(){
+        if (BORDER_LENGTH<MIN_BORDER_LENGTH){
+            BORDER_LENGTH = MIN_BORDER_LENGTH;
+        }
+        if (BORDER_LENGTH+RECT_CORNER_WITH*2>=Math.min(VIEW_WIDTH,VIEW_HEIGHT)){
+            BORDER_LENGTH = Math.min(VIEW_WIDTH,VIEW_HEIGHT)-RECT_CORNER_HEIGHT*3;
+            //MIN_BORDER_LENGTH = BORDER_LENGTH;
+        }
+        if (RECT_CORNER_HEIGHT*3>=BORDER_LENGTH){
+            RECT_CORNER_HEIGHT = (int) (BORDER_LENGTH/5);
+        }
+
+    }
+
+    /**
+     * 矩形裁剪模式
+     **/
+    private void drawRect(Canvas canvas) {
 
         //先绘制黑色透明度背景
         drawAlphaBg(canvas);
         //矩形框
-       if (BORDER_SHOW){
-           drawBorderRect(canvas);
-       }
+        if (BORDER_SHOW) {
+            drawBorderRect(canvas);
+        }
         //四个拐角线
-       if (CORNER_SHOW){
-           drawCornerLine(canvas);
-       }
+        if (CORNER_SHOW) {
+            drawCornerLine(canvas);
+        }
         //四个中间线
-        if (MIDDLE_SHOW){
+        if (MIDDLE_SHOW) {
             drawMiddleLine(canvas);
         }
         //画扫描线
@@ -313,41 +393,46 @@ public class CropView extends View {
         }
     }
 
-    /**圆形裁剪模式**/
-    private void drawCircle(Canvas canvas){
-
-        //圆形裁剪框
-        drawCircleUsePath(canvas);
-        //四个拐角线
-       if (CORNER_SHOW){
-           drawCornerLine(canvas);
-       }
-        //四个横线
-        if (MIDDLE_SHOW){
-            drawMiddleLine(canvas);
-        }
-    }
-
-    /**矩形裁剪模式**/
-    private void drawOval(Canvas canvas){
+    /**
+     * 矩形裁剪模式
+     **/
+    private void drawOval(Canvas canvas) {
 
         //圆形裁剪框
         drawOvalUsePath(canvas);
         //绘制矩形框
-        if (BORDER_SHOW){
+        if (BORDER_SHOW) {
             drawBorderRect(canvas);
         }
         //四个拐角线
-        if (CORNER_SHOW){
+        if (CORNER_SHOW) {
             drawCornerLine(canvas);
         }
         //四个中间线
-       if (MIDDLE_SHOW){
-           drawMiddleLine(canvas);
-       }
+        if (MIDDLE_SHOW) {
+            drawMiddleLine(canvas);
+        }
+    }
+
+    /**
+     * 圆形裁剪模式
+     **/
+    private void drawCircle(Canvas canvas) {
+
+        //圆形裁剪框
+        drawCircleUsePath(canvas);
+        //四个拐角线
+        if (CORNER_SHOW) {
+            drawCornerLine(canvas);
+        }
+        //四个横线
+        if (MIDDLE_SHOW) {
+            drawMiddleLine(canvas);
+        }
     }
 
     //-----------------------------------------绘制方法START----------------------------------------//
+
     /**
      * 绘制黑色半透明背景
      * 根据四个角的坐标范围，绘制多个矩形拼接
@@ -523,9 +608,9 @@ public class CropView extends View {
         paintRect.setStyle(Paint.Style.STROKE);
         //共四根线
         //竖1
-        canvas.drawLine((four_corner_coordinate_positions[0][0] +four_corner_coordinate_positions[4][0])/2 ,
+        canvas.drawLine((four_corner_coordinate_positions[0][0] + four_corner_coordinate_positions[4][0]) / 2,
                 four_corner_coordinate_positions[0][1],
-                (four_corner_coordinate_positions[0][0] +four_corner_coordinate_positions[4][0])/2,
+                (four_corner_coordinate_positions[0][0] + four_corner_coordinate_positions[4][0]) / 2,
                 four_corner_coordinate_positions[2][1],
                 paintRect);
         //竖2
@@ -535,16 +620,16 @@ public class CropView extends View {
                 four_corner_coordinate_positions[7][1],
                 paintRect);
         //竖3
-        canvas.drawLine( (four_corner_coordinate_positions[1][0]+four_corner_coordinate_positions[4][0])/2,
+        canvas.drawLine((four_corner_coordinate_positions[1][0] + four_corner_coordinate_positions[4][0]) / 2,
                 four_corner_coordinate_positions[1][1],
-                (four_corner_coordinate_positions[1][0]+four_corner_coordinate_positions[4][0])/2,
+                (four_corner_coordinate_positions[1][0] + four_corner_coordinate_positions[4][0]) / 2,
                 four_corner_coordinate_positions[3][1],
                 paintRect);
         //横1
-        canvas.drawLine(four_corner_coordinate_positions[0][0] ,
-                (four_corner_coordinate_positions[0][1]+four_corner_coordinate_positions[6][1])/2,
+        canvas.drawLine(four_corner_coordinate_positions[0][0],
+                (four_corner_coordinate_positions[0][1] + four_corner_coordinate_positions[6][1]) / 2,
                 four_corner_coordinate_positions[1][0],
-                (four_corner_coordinate_positions[0][1]+four_corner_coordinate_positions[6][1])/2,
+                (four_corner_coordinate_positions[0][1] + four_corner_coordinate_positions[6][1]) / 2,
                 paintRect);
         //横2
         canvas.drawLine(four_corner_coordinate_positions[6][0],
@@ -553,42 +638,13 @@ public class CropView extends View {
                 four_corner_coordinate_positions[5][1],
                 paintRect);
         //横3
-        canvas.drawLine(four_corner_coordinate_positions[0][0] ,
-                (four_corner_coordinate_positions[2][1]+four_corner_coordinate_positions[6][1])/2,
+        canvas.drawLine(four_corner_coordinate_positions[0][0],
+                (four_corner_coordinate_positions[2][1] + four_corner_coordinate_positions[6][1]) / 2,
                 four_corner_coordinate_positions[1][0],
-                (four_corner_coordinate_positions[2][1]+four_corner_coordinate_positions[6][1])/2,
+                (four_corner_coordinate_positions[2][1] + four_corner_coordinate_positions[6][1]) / 2,
                 paintRect);
 
         paintRect.reset();
-    }
-
-    /**
-     * 绘制圆形（路径剪切法）
-     * 如果是几何形的预览框，
-     * 那么首推限制绘画区域的方案,
-     * 内存占用率低。
-     **/
-    private void drawCircleUsePath(Canvas canvas) {
-        Paint paint = new Paint();
-        paint.setColor(Color.TRANSPARENT);
-        paint.setStyle(Paint.Style.FILL);
-        paint.setAntiAlias(true);
-        //创建圆形预览框
-        Path path = new Path();
-        path.addCircle(
-                (four_corner_coordinate_positions[0][0] + four_corner_coordinate_positions[1][0]) / 2,
-                (four_corner_coordinate_positions[0][1] + four_corner_coordinate_positions[2][1]) / 2,
-                BORDER_LENGTH / 2,
-                Path.Direction.CW);
-        //保存当前canvas 状态
-        canvas.save();
-        //将当前画布可以绘画区域限制死为预览框外的区域
-        canvas.clipPath(path, Region.Op.DIFFERENCE);
-        //绘画半透明遮罩
-        canvas.drawColor(OUTER_BG_COLOR);
-        //还原画布状态
-        canvas.restore();
-
     }
 
     /**
@@ -622,6 +678,35 @@ public class CropView extends View {
 
     }
 
+    /**
+     * 绘制圆形（路径剪切法）
+     * 如果是几何形的预览框，
+     * 那么首推限制绘画区域的方案,
+     * 内存占用率低。
+     **/
+    private void drawCircleUsePath(Canvas canvas) {
+        Paint paint = new Paint();
+        paint.setColor(Color.TRANSPARENT);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setAntiAlias(true);
+        //创建圆形预览框
+        Path path = new Path();
+        path.addCircle(
+                (four_corner_coordinate_positions[0][0] + four_corner_coordinate_positions[1][0]) / 2,
+                (four_corner_coordinate_positions[0][1] + four_corner_coordinate_positions[2][1]) / 2,
+                BORDER_LENGTH / 2,
+                Path.Direction.CW);
+        //保存当前canvas 状态
+        canvas.save();
+        //将当前画布可以绘画区域限制死为预览框外的区域
+        canvas.clipPath(path, Region.Op.DIFFERENCE);
+        //绘画半透明遮罩
+        canvas.drawColor(OUTER_BG_COLOR);
+        //还原画布状态
+        canvas.restore();
+
+    }
+
     //-----------------------------------------绘制方法END----------------------------------------//
 
     /**
@@ -636,18 +721,18 @@ public class CropView extends View {
      */
     private int isInTheCornerCircle(float x, float y) {
         Integer[] except = null;
-        if (TOUCH_CORNER_LINE_SCALE && TOUCH_MIDDLE_LINE_SCALE){//全部触发缩放
+        if (TOUCH_CORNER_LINE_SCALE && TOUCH_MIDDLE_LINE_SCALE) {//全部触发缩放
             except = null;
-        }else if (TOUCH_CORNER_LINE_SCALE){//拐角触发缩放
-            except = new Integer[]{4,5,6,7};
-        }else if(TOUCH_MIDDLE_LINE_SCALE){//中间线触发缩放
-            except = new Integer[]{0,1,2,3};
-        }else {
-            except = new Integer[]{0,1,2,3,4,5,6,7};
+        } else if (TOUCH_CORNER_LINE_SCALE) {//拐角触发缩放
+            except = new Integer[]{4, 5, 6, 7};
+        } else if (TOUCH_MIDDLE_LINE_SCALE) {//中间线触发缩放
+            except = new Integer[]{0, 1, 2, 3};
+        } else {
+            except = new Integer[]{0, 1, 2, 3, 4, 5, 6, 7};
         }
-        return QLHUtils.isInTheCornerCircle(x,y,
+        return QLHUtils.isInTheCornerCircle(x, y,
                 four_corner_coordinate_positions,
-                RECT_CORNER_HEIGHT,except);
+                RECT_CORNER_HEIGHT, except);
     }
 
     /**
@@ -809,7 +894,7 @@ public class CropView extends View {
      * @param offsetY Y轴偏移量
      */
     private void changeEightCoordinatePositions(int point, int offsetX, int offsetY) {
-        QLHUtils.changePositions(point,offsetX,offsetY,four_corner_coordinate_positions,max);
+        QLHUtils.changePositions(point, offsetX, offsetY, four_corner_coordinate_positions, max);
     }
 
     /**
@@ -822,7 +907,7 @@ public class CropView extends View {
         float d = four_corner_coordinate_positions[1][1];
         float temp1 = (float) Math.pow(a - c, 2);
         float temp2 = (float) Math.pow(b - d, 2);
-        BORDER_LENGTH = (float) Math.sqrt(temp1 + temp2);
+        BORDER_LENGTH = (int) Math.sqrt(temp1 + temp2);
     }
 
 
