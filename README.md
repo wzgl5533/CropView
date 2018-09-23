@@ -27,7 +27,7 @@ Add it in your project build.gradle at the end of repositories:
 Add it in your module build.gradle
 ```
 	dependencies {
-	        implementation 'com.github.wzgl5533:CropView:1.0'
+	        implementation 'com.github.wzgl5533:CropView:1.1'
 	}
 ```
 2. 添加DropDownMenu 到你的布局文件，如下：
