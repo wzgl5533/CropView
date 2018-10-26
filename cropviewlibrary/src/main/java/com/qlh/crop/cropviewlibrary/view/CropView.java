@@ -136,6 +136,8 @@ public class CropView extends View {
         //宽高占屏幕比例
         VIEW_WIDTH_PERCENT = ta.getString(R.styleable.CropView_cv_width_percent);
         VIEW_HEIGHT_PERCENT = ta.getString(R.styleable.CropView_cv_height_percent);
+		
+		ta.recycle();
     }
 
 
